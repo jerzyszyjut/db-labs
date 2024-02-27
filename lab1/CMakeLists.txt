@@ -4,4 +4,5 @@ project(lab1 C)
 set(CMAKE_C_STANDARD 11)
 
 add_executable(lab1 main.c
-        priority_queue_list.c)
+        queue.c
+        queue.h)

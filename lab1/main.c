@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "priority_queue_list.h"
+#include "queue.h"
 
 typedef struct process process;
 struct process {
@@ -17,7 +17,7 @@ print_process(void *data) {
 int
 main(int argc, char **argv) {
 	
-	pqueue *queue = NULL;
+	queue *q = NULL;
 	process *p1, *p2, *p3;
 	p1 = (process *) malloc(sizeof(process));
 	strcpy(p1->name, "Firefox");
@@ -26,26 +26,30 @@ main(int argc, char **argv) {
 	p3 = (process *) malloc(sizeof(process));
 	strcpy(p3->name, "Important Calculations");
 
-	qinsert(&queue, p1, 5);
-	qinsert(&queue, p2, 2);
-	qinsert(&queue, p3, 10);
-	qlist(queue, print_process);
+	qinsert(&q, p1);
+	qinsert(&q, p2);
+	qinsert(&q, p3);
+	qlist(q, print_process);
+	printf("\n");
+
+	qswap(&q, 0, 2);
+	qlist(q, print_process);
+
+	printf("\n");
+	qpop(&q);
+	qlist(q, print_process);
 	
 	printf("\n");
-	qremove(&queue, 2);
-	qlist(queue, print_process);
+	qinsert(&q, p2);
+	qlist(q, print_process);
 	
 	printf("\n");
-	qinsert(&queue, p2, 11);
-	qlist(queue, print_process);
+	qpop(&q);
+	qlist(q, print_process);
 	
 	printf("\n");
-	qremove(&queue, 5);
-	qlist(queue, print_process);
-	
-	printf("\n");
-	qremove(&queue, 11);
-	qlist(queue, print_process);
+	qpop(&q);
+	qlist(q, print_process);
 	
 	free(p1);
 	free(p2);

@@ -46,9 +46,9 @@ int fork_children(int range_start, int range_end, int children_count, int depth)
     }
 
     int subchildren_count = 0;
-    for(int i=1; i <= depth; i++)
+    for(int i=0; i < depth; i++)
     {
-        subchildren_count += pow(2, i);
+        subchildren_count += (2 << i);
     }
 
     int my_chunk = (range_end - range_start) / (subchildren_count + 1);
@@ -75,6 +75,8 @@ int fork_children(int range_start, int range_end, int children_count, int depth)
         waitpid(pids[i], &wstatus, 0);
         count += WEXITSTATUS(wstatus);
     }
+    
+    free(pids);
 
     return count;
 }

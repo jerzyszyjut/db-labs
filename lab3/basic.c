@@ -38,22 +38,19 @@ int count_fibonacci_primes(int a, int b)
 
 int fork_children(int range_start, int range_end, int children_count, int depth)
 {
-    int count = 0;
-
     if(depth == 0)
     {
         return count_fibonacci_primes(range_start, range_end);
     }
 
-    int subchildren_count = 0;
+    int count = 0, subchildren_count = 0, wstatus;
+    
     for(int i=0; i < depth; i++)
     {
         subchildren_count += (2 << i);
     }
 
-    int my_chunk = (range_end - range_start) / (subchildren_count + 1);
-    int children_chunk = (range_end - range_start - my_chunk) / (children_count);
-
+    int my_chunk = (range_end - range_start) / (subchildren_count + 1), children_chunk = (range_end - range_start - my_chunk) / (children_count);
     pid_t* pids = (pid_t*) malloc(sizeof(pid_t) * children_count);
 
     for(int i=0; i < children_count; i++)
@@ -69,13 +66,12 @@ int fork_children(int range_start, int range_end, int children_count, int depth)
 
     count += count_fibonacci_primes(range_start, range_start + my_chunk);
 
-    int wstatus;
     for(int i=0; i < children_count; i++)
     {
         waitpid(pids[i], &wstatus, 0);
         count += WEXITSTATUS(wstatus);
     }
-    
+
     free(pids);
 
     return count;

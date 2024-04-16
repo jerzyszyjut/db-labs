@@ -10,6 +10,7 @@
 #define PORT 8080
 #define MAX_CLIENTS 10
 
+int client_sockets[MAX_CLIENTS] = { -1 };
 void client_thread(void* data) {
     int client_socket = *(int*)data;
     char buffer[1024] = {0};
@@ -19,8 +20,16 @@ void client_thread(void* data) {
         if (valread == 0) {
             break;
         }
-        printf("Received from client: %s\n", buffer);
-        send(client_socket, buffer, 1024, 0);
+        
+        printf("%s\n", buffer);
+
+        for(int i=0; i <= MAX_CLIENTS; i++)
+        {
+            if(client_sockets[i] != -1 && client_sockets[i] != client_socket)
+            {
+                send(client_sockets[i] , buffer, 1024, 0);
+            }
+        }
     }
     close(client_socket);
 }
@@ -28,7 +37,6 @@ void client_thread(void* data) {
 int main() {
     pthread_t client_threads[MAX_CLIENTS];
     int server_fd;
-    int client_socket[MAX_CLIENTS];
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
@@ -61,13 +69,13 @@ int main() {
 
     while (1)
     {
-        client_socket[counter] = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
-        if (client_socket[counter] < 0) {
+        client_sockets[counter] = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+        if (client_sockets[counter] < 0) {
             perror("accept");
             exit(EXIT_FAILURE);
         }
         fprintf(stdout, "Client no. %d connected\n", counter);
-        pthread_create(&client_threads[counter], NULL, (void*)client_thread, (void*)&client_socket[counter]);
+        pthread_create(&client_threads[counter], NULL, (void*)client_thread, (void*)&client_sockets[counter]);
         counter+=1;
     }
     

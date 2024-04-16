@@ -15,7 +15,6 @@ void *sender_thread(void *data)
     {
         fscanf(stdin, "%s", buffer);
         send(client_fd, buffer, 1024, 0);
-        fprintf(stdout, "Sent to server: %s\n", buffer);
     }
 }
 
@@ -31,7 +30,7 @@ void *listener_thread(void *data)
         {
             break;
         }
-        printf("Received from server: %s\n", buffer);
+        printf("%s\n", buffer);
     }
     close(client_fd);
 }

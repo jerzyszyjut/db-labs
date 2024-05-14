@@ -44,8 +44,7 @@ int main()
   pipe(potok_konczacy);
   pipe(semafor);
 
-  for(int i=0; i<MAX_ALLOWED_THREADS; i++)
-    write(semafor[ZAPIS], &i, sizeof(i));
+  for(int i=0; i<MAX_ALLOWED_THREADS; i++) write(semafor[ZAPIS], &i, sizeof(i));
 
   for (i = 0; i < WORKERS; i++)
   {

@@ -4,7 +4,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ProducerRunnable implements Runnable {
   private final Warehouse warehouse;
-  private final ThreadLocalRandom random;
+  private ThreadLocalRandom random;
 
   public ProducerRunnable(Warehouse warehouse) {
     this.warehouse = warehouse;
@@ -13,6 +13,8 @@ public class ProducerRunnable implements Runnable {
 
   @Override
   public void run() {
+    this.random = ThreadLocalRandom.current();
+
     while (warehouse.isRunning) {
       int randomSleep = random.nextInt(5000, 20000);
       System.out.println("Producer sleeps for " + randomSleep + " ms");

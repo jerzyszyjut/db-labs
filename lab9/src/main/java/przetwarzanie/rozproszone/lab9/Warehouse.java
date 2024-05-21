@@ -17,8 +17,13 @@ public class Warehouse {
     }
   }
 
-  public synchronized void put(Products product, int quantity) {
-    products.put(product, products.get(product) + quantity);
+  public void put(Products product, int quantity) {
+    lock.lock();
+    try {
+      products.put(product, products.get(product) + quantity);
+    } finally {
+      lock.unlock();
+    }
   }
 
   public int get(Products product) {
@@ -31,11 +36,15 @@ public class Warehouse {
     }
   }
 
-  public synchronized void lock() {
+  public void lock() {
     lock.lock();
   }
 
-  public synchronized void unlock() {
-    lock.unlock();
+  public void unlock() {
+    try {
+      lock.unlock();
+    } catch (IllegalMonitorStateException e) {
+      System.out.println("Unlocking a lock that is not locked");
+    }
   }
 }

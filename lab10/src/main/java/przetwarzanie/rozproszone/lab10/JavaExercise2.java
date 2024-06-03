@@ -20,7 +20,7 @@ public class JavaExercise2 {
       System.out.printf("\t[%s] Computing if %d is prime\n", Thread.currentThread().getName(), x);
 
       try {
-        Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+        Thread.sleep(TimeUnit.SECONDS.toMillis(30));
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }

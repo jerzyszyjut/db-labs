@@ -93,7 +93,7 @@ void put(const long msqid, struct m_message *msg, int id)
 
 int main()
 {
-  key_t key = ftok("main.c", 64);
+  key_t key = ftok("main.c", 66);
   long msqid = msgget(key, 0666 | IPC_CREAT);
   struct m_message *msg = malloc(m_size);
   msg->msg_type = MSG_TYPE_LOCK;
@@ -124,6 +124,8 @@ int main()
   for(int i = 0; i < number_of_putting_processes + number_of_getting_processes; i++) {
     wait(NULL);
   }
+
+  msgctl(msqid, IPC_RMID, NULL);
 
   return 0;
 }

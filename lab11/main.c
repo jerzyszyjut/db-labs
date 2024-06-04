@@ -26,10 +26,13 @@ size_t m_size = sizeof(struct m_message);
 void m_prime(const long msqid) 
 {
   struct m_message *m = malloc(m_size);
+  
   m->msg_type = MSG_TYPE_LOCK;
   m->size = 0;
   m->i = 0;
+  
   msgsnd(msqid, m, m_size, 0);
+  free(m);
 }
 
 void m_enter(const long msqid, struct m_message *msg)
@@ -39,66 +42,57 @@ void m_enter(const long msqid, struct m_message *msg)
 
 void m_wait(const long msqid, struct m_message *msg, struct m_message_wait *m_wait)
 {
-  // release lock
   msgsnd(msqid, msg, m_size, 0);
  
-  // wait for notification
-  // printf("[%d] msg->size: %d\n", getpid(), msg->size);
-  // printf("[%d] Process is waiting\n", getpid(), msg->queue[msg->i]);
   msgrcv(msqid, m_wait, sizeof(struct m_message_wait), MSG_TYPE_NOTIFY, 0);
-  // printf("[%d] Process is notified\n", getpid(), m_wait->id);
 
-  // reacquire lock
   msgrcv(msqid, msg, m_size, MSG_TYPE_LOCK, 0);
 }
 
-void m_notify(const long msqid, struct m_message *msg)
+void m_notify(const long msqid, struct m_message *msg, struct m_message_wait *m_wait)
 {
-  // notify waiting processes
-  struct m_message_wait *m_wait = malloc(sizeof(struct m_message_wait));
-  m_wait->msg_type = MSG_TYPE_NOTIFY;
-  m_wait->id = msg->queue[msg->i];
-  // printf("[%d] Notify process %d\n", getpid(), m_wait->id);
   msgsnd(msqid, m_wait, sizeof(struct m_message_wait), 0);
-  // printf("[%d] Notified process %d\n", getpid(), m_wait->id);
 
-  // release lock
   msgsnd(msqid, msg, m_size, 0);
 }
 
 void get(const long msqid, struct m_message *msg, struct m_message_wait *msg_wait, int id)
 {
   m_enter(msqid, msg);
-  // printf("[%d] Process is trying to get a resource, msg->size: %d\n", getpid(), msg->size);
+  
   while(msg->size == 0) {
-    // printf("[%d] Message size: %d\n", getpid(), msg->size);
-    // printf("[%d] Process is waiting\n", getpid());
     m_wait(msqid, msg, msg_wait);
-    // printf("[%d] Process is notified\n", getpid());
   }
-  // printf("[%d] Got resource\n", getpid());
+  
   msg->size--;
   msg->i = (msg->i + 1) % MAX_SIZE;
-  m_notify(msqid, msg);
+
+  m_notify(msqid, msg, msg_wait); 
 }
 
-void put(const long msqid, struct m_message *msg, int id)
+void put(const long msqid, struct m_message *msg, struct m_message_wait *msg_wait, int id)
 {
   m_enter(msqid, msg);
+
   msg->size++;
-  // printf("[%d] Increase resource size %d\n", getpid(), msg->size);
   msg->queue[msg->i] = id;
-  m_notify(msqid, msg);
+  
+  m_notify(msqid, msg, msg_wait);
 }
 
 int main()
 {
   key_t key = ftok("main.c", 66);
   long msqid = msgget(key, 0666 | IPC_CREAT);
+  
   struct m_message *msg = malloc(m_size);
   msg->msg_type = MSG_TYPE_LOCK;
   msg->size = 0;
   msg->i = 0;
+
+  struct m_message_wait *msg_wait = malloc(sizeof(struct m_message_wait));
+  msg_wait->msg_type = MSG_TYPE_NOTIFY;
+  msg_wait->id = 0;
   m_prime(msqid);
 
   int number_of_putting_processes = 2;
@@ -106,7 +100,8 @@ int main()
   for(int i = 0; i < number_of_putting_processes; i++) {
     if(fork() == 0) {
       sleep(5);
-      put(msqid, msg, i);
+      printf("[%d] Try to put resource\n", getpid());
+      put(msqid, msg, msg_wait, i);
       printf("[%d] Put resource\n", getpid());
       exit(0);
     }
@@ -114,7 +109,7 @@ int main()
 
   for(int i = 0; i < number_of_getting_processes; i++) {
     if(fork() == 0) {
-      struct m_message_wait *msg_wait = malloc(sizeof(struct m_message_wait));
+      printf("[%d] Try to get resource\n", getpid());
       get(msqid, msg, msg_wait, i);
       printf("[%d] Got resource\n", getpid());
       exit(0);
@@ -124,6 +119,9 @@ int main()
   for(int i = 0; i < number_of_putting_processes + number_of_getting_processes; i++) {
     wait(NULL);
   }
+
+  free(msg);
+  free(msg_wait);
 
   msgctl(msqid, IPC_RMID, NULL);
 
